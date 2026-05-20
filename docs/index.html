@@ -1,0 +1,818 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Site Unified Frontier Cjp</title>
+  <!-- Tailwind CSS CDN for utility classes -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      -webkit-font-smoothing: antialiased;
+    }
+    /* Scrollbar - theme-adaptive */
+    ::-webkit-scrollbar { width: 8px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.15); border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.25); }
+    
+    /* Glass Nav - transparent on hero, solid when scrolled */
+    header {
+      background: transparent;
+      transition: background 0.3s, backdrop-filter 0.3s, box-shadow 0.3s;
+    }
+    header[data-scrolled="true"] {
+      background: rgba(9, 9, 11, 0.97);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+      border-bottom: 1px solid rgba(39, 39, 42, 0.8);
+    }
+    header[data-scrolled="true"] a {
+      color: rgba(250, 250, 250, 0.95);
+    }
+    
+    /* Hero Grid Background */
+    .hero-grid {
+      position: absolute;
+      inset: 0;
+      background-image: linear-gradient(to right, rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+                        linear-gradient(to bottom, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+      background-size: 64px 64px;
+      mask-image: radial-gradient(ellipse 60% 50% at 50% 50%, black 20%, transparent 70%);
+      pointer-events: none;
+    }
+    
+    /* Fade In Up Animation */
+    @keyframes fade-in-up {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+    
+    .fade-in-up {
+      animation: fade-in-up 0.6s ease-out forwards;
+      opacity: 0; /* Hidden by default */
+    }
+    .delay-100 { animation-delay: 0.1s; }
+    .delay-200 { animation-delay: 0.2s; }
+    .delay-300 { animation-delay: 0.3s; }
+    
+    /* Mobile Menu */
+    #mobile-menu-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.5);
+      backdrop-filter: blur(8px);
+      z-index: 99998;
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 0.3s ease, visibility 0.3s ease;
+    }
+    #mobile-menu-backdrop.show {
+      opacity: 1;
+      visibility: visible;
+    }
+    #mobile-menu {
+      position: fixed;
+      top: 64px;
+      right: 0;
+      bottom: 0;
+      width: 100%;
+      max-width: 320px;
+      background: rgba(10, 10, 15, 0.98);
+      backdrop-filter: blur(20px);
+      z-index: 99999;
+      transform: translateX(100%);
+      transition: transform 0.3s ease;
+    }
+    #mobile-menu.show {
+      transform: translateX(0);
+    }
+    #mobile-menu nav {
+      display: flex;
+      flex-direction: column;
+      padding: 2rem 1.5rem;
+      gap: 1rem;
+    }
+    #mobile-menu nav a {
+      padding: 0.75rem 1rem;
+      font-size: 1.125rem;
+      border-radius: 0.75rem;
+      transition: background 0.2s;
+      color: #fff;
+    }
+    #mobile-menu nav a:hover {
+      background: rgba(255, 255, 255, 0.08);
+    }
+    
+    .scrollbar-hide {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+    .scrollbar-hide::-webkit-scrollbar {
+      display: none;
+    }
+    
+    .announcement-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.375rem 1rem 0.375rem 0.625rem;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 9999px;
+      font-size: 0.875rem;
+    }
+    
+    .ping-dot {
+      position: relative;
+      width: 8px;
+      height: 8px;
+    }
+    
+    .ping-dot::before,
+    .ping-dot::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      border-radius: 50%;
+      background: currentColor;
+    }
+    
+    .ping-dot::after {
+      animation: ping 2s cubic-bezier(0, 0, 0.2, 1) infinite;
+    }
+    
+    @keyframes ping {
+      75%, 100% { transform: scale(2); opacity: 0; }
+    }
+    
+    button#mobile-menu-button {
+      display: none;
+    }
+    @media (max-width: 767px) {
+      .desktop-nav {
+        display: none !important;
+      }
+      button#mobile-menu-button {
+        display: block;
+      }
+    }
+    
+    .desktop-nav a {
+      display: flex;
+    }
+    .desktop-nav a:last-child {
+      margin-left: 1rem;
+    }
+    
+    div[data-gh-placeholder="true"] {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      background-size: 100% 100%;
+    }
+    div[data-gh-placeholder="true"] svg {
+      margin-bottom: 0.5rem;
+    }
+    div[data-gh-placeholder="true"] span {
+      font-size: 0.875rem;
+      color: #a0aec0;
+    }
+    
+    .dark div[data-gh-placeholder="true"] {
+      background: linear-gradient(to bottom right, #1f2937, #111827);
+      border-color: #4b5563;
+    }
+    .dark div[data-gh-placeholder="true"] svg {
+      color: #6b7280;
+    }
+    .dark div[data-gh-placeholder="true"] span {
+      color: #9ca3af;
+    }
+    
+    div[data-gh-placeholder="true"][data-gh-category="intent-professional"].aspect-\[4\/3\] {
+      aspect-ratio: 4/3;
+    }
+    
+    div[data-gh-placeholder="true"][data-gh-category="intent-professional"].aspect-video {
+      aspect-ratio: 16/9;
+    }
+    
+    .w-12.h-12.rounded-full.bg-blue-600.flex.items-center.justify-center.text-white.font-bold.text-lg {
+        background-color: #2563eb;
+    }
+    .w-12.h-12.rounded-full.bg-emerald-600.flex.items-center.justify-center.text-white.font-bold.text-lg {
+        background-color: #059669;
+    }
+    .w-12.h-12.rounded-full.bg-violet-600.flex.items-center.justify-center.text-white.font-bold.text-lg {
+        background-color: #7c3aed;
+    }
+    
+    *:focus-visible {
+      outline: 2px solid #3b82f6;
+      outline-offset: 2px;
+    }
+    
+    header[data-scrolled="true"] a {
+      color: #e4e4e7;
+    }
+    header[data-scrolled="true"] a:hover {
+      color: #fff;
+    }
+    header[data-scrolled="true"] .desktop-nav a:last-child {
+      background-color: #2563eb;
+      color: #fff;
+    }
+    header[data-scrolled="true"] .desktop-nav a:last-child:hover {
+      background-color: #1d4ed8;
+    }
+    
+    #mobile-menu nav a {
+      color: #fff;
+    }
+    #mobile-menu nav a:hover {
+      background: rgba(255, 255, 255, 0.1);
+    }
+    #mobile-menu nav a:last-child {
+      background-color: #2563eb;
+      color: #fff;
+    }
+    #mobile-menu nav a:last-child:hover {
+      background-color: #1d4ed8;
+    }
+    
+    body {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+    body::-webkit-scrollbar {
+      display: none;
+    }
+    
+    #mobile-menu-button {
+      background: none;
+      border: none;
+      padding: 0;
+      cursor: pointer;
+      color: #fff;
+    }
+    #mobile-menu-button svg {
+      width: 24px;
+      height: 24px;
+    }
+    
+    .hero-grid {
+      background-image: linear-gradient(to right, rgba(255, 255, 255, 0.05) 1px, transparent 1px),
+                        linear-gradient(to bottom, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
+    }
+    
+    div[data-gh-placeholder="true"] svg {
+      color: #9ca3af;
+    }
+    div[data-gh-placeholder="true"] span {
+      color: #9ca3af;
+    }
+    div[data-gh-placeholder="true"] {
+      border-color: #4b5563;
+    }
+    
+    .desktop-nav {
+      gap: 2rem;
+    }
+    .desktop-nav a:last-child {
+      margin-left: 1rem;
+    }
+    .desktop-nav a:last-child:hover {
+      background-color: #1d4ed8;
+    }
+    
+    .desktop-nav a {
+      color: #a1a1aa;
+    }
+    .desktop-nav a:hover {
+      color: #fff;
+    }
+    
+    .hero-grid {
+      z-index: 0;
+    }
+    .relative.z-10 {
+      z-index: 1;
+    }
+    
+    .announcement-badge {
+      background: rgba(255, 255, 255, 0.08);
+      border-color: rgba(255, 255, 255, 0.15);
+      color: #fff;
+    }
+    .ping-dot {
+      color: #3b82f6;
+    }
+    .announcement-badge span:first-child {
+      color: #3b82f6;
+    }
+    
+    #testimonials blockquote {
+      color: #d4d4d8;
+    }
+    #testimonials p.font-medium {
+      color: #fff;
+    }
+    #testimonials p.text-sm {
+      color: #a1a1aa;
+    }
+    
+    footer a {
+      color: #a1a1aa;
+    }
+    footer a:hover {
+      color: #fff;
+    }
+    footer h3, footer h4 {
+      color: #fff;
+    }
+    footer p {
+      color: #a1a1aa;
+    }
+    
+    .desktop-nav a.inline-flex {
+      background-color: #2563eb;
+      color: #fff;
+    }
+    .desktop-nav a.inline-flex:hover {
+      background-color: #1d4ed8;
+    }
+    
+    .hero-grid {
+      mask-image: radial-gradient(ellipse 60% 50% at 50% 50%, black 20%, transparent 70%);
+    }
+    
+    div[data-gh-placeholder="true"].dark\:from-gray-800 {
+      background: linear-gradient(to bottom right, #1f2937, #111827);
+    }
+    div[data-gh-placeholder="true"].dark\:border-gray-600 {
+      border-color: #4b5563;
+    }
+    div[data-gh-placeholder="true"].dark\:text-gray-500 {
+      color: #6b7280;
+    }
+    div[data-gh-placeholder="true"].dark\:text-gray-400 {
+      color: #9ca3af;
+    }
+    
+    header a {
+      color: #fff;
+    }
+    header a.text-zinc-400 {
+      color: #a1a1aa;
+    }
+    header a.text-zinc-400:hover {
+      color: #fff;
+    }
+    
+    div[data-gh-placeholder="true"].w-full.aspect-video {
+      background: linear-gradient(to bottom right, #1f2937, #111827);
+      border: 2px dashed #4b5563;
+      color: #6b7280;
+    }
+    div[data-gh-placeholder="true"].w-full.aspect-video span {
+      color: #9ca3af;
+    }
+    div[data-gh-placeholder="true"].w-full.aspect-\[4\/3\] {
+      background: linear-gradient(to bottom right, #1f2937, #111827);
+      border: 2px dashed #4b5563;
+      color: #6b7280;
+    }
+    div[data-gh-placeholder="true"].w-full.aspect-\[4\/3\] span {
+      color: #9ca3af;
+    }
+    
+    #hero h1, #hero em {
+      color: #fff;
+    }
+    #hero p {
+      color: #a1a1aa;
+    }
+    
+    #about p.text-sm {
+      color: #3b82f6;
+    }
+    #about h2 {
+      color: #fff;
+    }
+    #about em {
+      color: #60a5fa;
+    }
+    #about p.text-lg {
+      color: #a1a1aa;
+    }
+    #about ul li {
+      color: #d4d4d8;
+    }
+    #about ul li .iconify {
+      color: #3b82f6;
+    }
+    
+    #insights p.text-sm {
+      color: #3b82f6;
+    }
+    #insights h2 {
+      color: #fff;
+    }
+    #insights em {
+      color: #60a5fa;
+    }
+    #insights h3 {
+      color: #fff;
+    }
+    #insights p.text-zinc-400 {
+      color: #a1a1aa;
+    }
+    
+    #research p.text-sm {
+      color: #3b82f6;
+    }
+    #research h2 {
+      color: #fff;
+    }
+    #research em {
+      color: #60a5fa;
+    }
+    #research p.text-lg {
+      color: #a1a1aa;
+    }
+    
+    #workspace p.text-sm {
+      color: #3b82f6;
+    }
+    #workspace h2 {
+      color: #fff;
+    }
+    #workspace em {
+      color: #60a5fa;
+    }
+    #workspace h3 {
+      color: #fff;
+    }
+    #workspace p.text-zinc-400 {
+      color: #a1a1aa;
+    }
+    
+    #cta h2 {
+      color: #fff;
+    }
+    #cta em {
+      color: #60a5fa;
+    }
+    #cta p.text-lg {
+      color: #a1a1aa;
+    }
+    
+    .w-12.h-12.rounded-full.bg-blue-600 {
+      background-color: #2563eb;
+    }
+    .w-12.h-12.rounded-full.bg-emerald-600 {
+      background-color: #059669;
+    }
+    .w-12.h-12.rounded-full.bg-violet-600 {
+      background-color: #7c3aed;
+    }
+  </style>
+</head>
+<body class="bg-zinc-950 text-white font-sans">
+
+    <header data-scrolled="false" class="fixed top-0 left-0 right-0 z-50 transition-all duration-300">
+        <div class="max-w-7xl mx-auto px-6">
+            <div class="flex items-center justify-between h-20">
+                <a href="#" class="text-2xl font-semibold text-white">Unified Frontier CJP</a>
+                <div class="desktop-nav" style="display:flex;align-items:center;gap:2rem;">
+                    <a href="#about" class="text-sm font-medium text-zinc-400 hover:text-white transition-colors">About Us</a>
+                    <a href="#insights" class="text-sm font-medium text-zinc-400 hover:text-white transition-colors">Insights</a>
+                    <a href="#research" class="text-sm font-medium text-zinc-400 hover:text-white transition-colors">Research</a>
+                    <a href="#workspace" class="text-sm font-medium text-zinc-400 hover:text-white transition-colors">Workspace</a>
+                    <a href="#contact" class="inline-flex items-center justify-center h-10 px-6 rounded-xl bg-blue-600 text-white font-semibold text-sm transition-all hover:bg-blue-700">Join Us</a>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <section id="hero" class="relative pt-32 md:pt-48 pb-20 md:pb-32 bg-zinc-950">
+        <div class="hero-grid"></div>
+        <div class="relative z-10 max-w-4xl mx-auto px-6 text-center">
+            <h1 class="text-5xl md:text-7xl font-semibold tracking-tighter text-white leading-tight mb-6 fade-in-up">
+                Exposing Truths, <em class="text-blue-500 italic">Empowering Change</em>
+            </h1>
+            <p class="mt-6 text-base md:text-lg font-normal text-zinc-400 max-w-2xl mx-auto leading-relaxed fade-in-up delay-100">
+                Unified Frontier CJP is dedicated to real-time data analysis, research, and exposing false narratives to build a stronger India.
+            </p>
+            <div class="mt-10 flex gap-4 justify-center fade-in-up delay-200">
+                <a href="#insights" class="inline-flex items-center justify-center h-12 px-8 rounded-xl bg-blue-600 text-white font-semibold hover:bg-blue-700 hover:scale-[1.02] active:scale-[0.98] transition-all">
+                    Explore Insights <span class="iconify ml-2 w-5 h-5" data-icon="lucide:arrow-right"></span>
+                </a>
+                <a href="#about" class="inline-flex items-center justify-center h-12 px-8 rounded-xl border border-zinc-700 font-semibold text-zinc-200 hover:bg-zinc-800 transition-colors">
+                    Learn More
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <section id="about" class="py-24 bg-zinc-900 border-t border-zinc-800/50">
+        <div class="max-w-7xl mx-auto px-6">
+            <div class="grid lg:grid-cols-2 gap-16 items-center">
+                <div class="lg:order-2">
+                    <div data-gh-placeholder="true" data-gh-category="intent-professional" class="w-full aspect-[4/3] bg-gradient-to-br from-gray-800 to-gray-900 border-2 border-dashed border-gray-600 rounded-xl flex flex-col items-center justify-center gap-3">
+                        <svg class="w-12 h-12 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                        <span class="text-sm font-medium text-gray-400">Add your about image</span>
+                    </div>
+                </div>
+                <div class="lg:order-1">
+                    <p class="text-sm font-medium text-blue-500 tracking-wide uppercase mb-4">Our Mission</p>
+                    <h2 class="text-3xl md:text-5xl font-medium tracking-tight text-white mb-6">
+                        A Unified Front for <em class="text-blue-400 italic">Accountability</em>
+                    </h2>
+                    <p class="text-lg text-zinc-400 leading-relaxed mb-6">
+                        We are CJP, the new generation committed to bringing transparency and integrity back into public discourse. Our members unite to challenge misinformation and drive positive change for India.
+                    </p>
+                    <ul class="space-y-3">
+                        <li class="flex items-center gap-3 text-zinc-300">
+                            <span class="iconify w-5 h-5 text-blue-500" data-icon="lucide:check-circle-2"></span>
+                            <span>Exposing false narratives with irrefutable data.</span>
+                        </li>
+                        <li class="flex items-center gap-3 text-zinc-300">
+                            <span class="iconify w-5 h-5 text-blue-500" data-icon="lucide:check-circle-2"></span>
+                            <span>Conducting in-depth research on critical national issues.</span>
+                        </li>
+                        <li class="flex items-center gap-3 text-zinc-300">
+                            <span class="iconify w-5 h-5 text-blue-500" data-icon="lucide:check-circle-2"></span>
+                            <span>Fostering a collaborative environment for members to act.</span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="insights" class="py-24 bg-zinc-950 border-t border-zinc-800/50">
+        <div class="max-w-7xl mx-auto px-6">
+            <div class="text-center max-w-3xl mx-auto mb-16">
+                <p class="text-sm font-medium text-blue-500 tracking-wide uppercase mb-4">Data-Driven Perspectives</p>
+                <h2 class="text-3xl md:text-5xl font-medium tracking-tight text-white">
+                    Real-Time <em class="text-blue-400 italic">Insights</em> on Key Issues
+                </h2>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                <div class="group p-8 rounded-2xl bg-zinc-900 border border-zinc-800/50 hover:border-zinc-700 hover:shadow-lg hover:shadow-black/20 transition-all duration-300">
+                    <div class="w-12 h-12 rounded-xl bg-blue-600/10 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
+                        <span class="iconify w-6 h-6 text-blue-500" data-icon="lucide:bar-chart-3"></span>
+                    </div>
+                    <h3 class="text-xl font-medium text-white tracking-tight mb-3">Economic Impact Analysis</h3>
+                    <p class="text-zinc-400 leading-relaxed">
+                        Detailed reports on government policies and their real economic consequences for citizens.
+                    </p>
+                </div>
+                <div class="group p-8 rounded-2xl bg-zinc-900 border border-zinc-800/50 hover:border-zinc-700 hover:shadow-lg hover:shadow-black/20 transition-all duration-300">
+                    <div class="w-12 h-12 rounded-xl bg-blue-600/10 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
+                        <span class="iconify w-6 h-6 text-blue-500" data-icon="lucide:users-2"></span>
+                    </div>
+                    <h3 class="text-xl font-medium text-white tracking-tight mb-3">Social Justice & Equity</h3>
+                    <p class="text-zinc-400 leading-relaxed">
+                        Investigating disparities and proposing data-backed solutions for a more equitable society.
+                    </p>
+                </div>
+                <div class="group p-8 rounded-2xl bg-zinc-900 border border-zinc-800/50 hover:border-zinc-700 hover:shadow-lg hover:shadow-black/20 transition-all duration-300">
+                    <div class="w-12 h-12 rounded-xl bg-blue-600/10 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
+                        <span class="iconify w-6 h-6 text-blue-500" data-icon="lucide:shield-check"></span>
+                    </div>
+                    <h3 class="text-xl font-medium text-white tracking-tight mb-3">Governance & Accountability</h3>
+                    <p class="text-zinc-400 leading-relaxed">
+                        Auditing government claims and exposing truths behind political narratives with evidence.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="research" class="py-24 bg-zinc-900 border-t border-zinc-800/50">
+        <div class="max-w-7xl mx-auto px-6">
+            <div class="grid lg:grid-cols-2 gap-16 items-center">
+                <div>
+                    <p class="text-sm font-medium text-blue-500 tracking-wide uppercase mb-4">In-Depth Studies</p>
+                    <h2 class="text-3xl md:text-5xl font-medium tracking-tight text-white mb-6">
+                        Unbiased <em class="text-blue-400 italic">Research</em> for a Clearer Picture
+                    </h2>
+                    <p class="text-lg text-zinc-400 leading-relaxed mb-8">
+                        Our dedicated team conducts thorough research on critical national topics, providing unbiased reports backed by comprehensive data and verifiable evidence. We turn complex issues into actionable insights.
+                    </p>
+                    <a href="#workspace" class="inline-flex items-center justify-center h-12 px-8 rounded-xl bg-blue-600 text-white font-semibold hover:bg-blue-700 hover:scale-[1.02] active:scale-[0.98] transition-all">
+                        View Latest Research <span class="iconify ml-2 w-5 h-5" data-icon="lucide:arrow-right"></span>
+                    </a>
+                </div>
+                <div>
+                    <div data-gh-placeholder="true" data-gh-category="intent-professional" class="w-full aspect-[4/3] bg-gradient-to-br from-gray-800 to-gray-900 border-2 border-dashed border-gray-600 rounded-xl flex flex-col items-center justify-center gap-3">
+                        <svg class="w-12 h-12 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                        <span class="text-sm font-medium text-gray-400">Add your research image</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="workspace" class="py-24 bg-zinc-950 border-t border-zinc-800/50">
+        <div class="max-w-7xl mx-auto px-6">
+            <div class="text-center max-w-3xl mx-auto mb-16">
+                <p class="text-sm font-medium text-blue-500 tracking-wide uppercase mb-4">Collaborate & Contribute</p>
+                <h2 class="text-3xl md:text-5xl font-medium tracking-tight text-white">
+                    Your Dedicated <em class="text-blue-400 italic">Workspace</em>
+                </h2>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                <div class="group p-8 rounded-2xl bg-zinc-900 border border-zinc-800/50 hover:border-zinc-700 hover:shadow-lg hover:shadow-black/20 transition-all duration-300">
+                    <div class="w-12 h-12 rounded-xl bg-blue-600/10 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
+                        <span class="iconify w-6 h-6 text-blue-500" data-icon="lucide:kanban-square"></span>
+                    </div>
+                    <h3 class="text-xl font-medium text-white tracking-tight mb-3">Project Management</h3>
+                    <p class="text-zinc-400 leading-relaxed">
+                        Organize research, track progress, and manage tasks efficiently with integrated tools.
+                    </p>
+                </div>
+                <div class="group p-8 rounded-2xl bg-zinc-900 border border-zinc-800/50 hover:border-zinc-700 hover:shadow-lg hover:shadow-black/20 transition-all duration-300">
+                    <div class="w-12 h-12 rounded-xl bg-blue-600/10 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
+                        <span class="iconify w-6 h-6 text-blue-500" data-icon="lucide:users-2"></span>
+                    </div>
+                    <h3 class="text-xl font-medium text-white tracking-tight mb-3">Member Directory</h3>
+                    <p class="text-zinc-400 leading-relaxed">
+                        Connect with fellow CJP members, share expertise, and build a strong network.
+                    </p>
+                </div>
+                <div class="group p-8 rounded-2xl bg-zinc-900 border border-zinc-800/50 hover:border-zinc-700 hover:shadow-lg hover:shadow-black/20 transition-all duration-300">
+                    <div class="w-12 h-12 rounded-xl bg-blue-600/10 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
+                        <span class="iconify w-6 h-6 text-blue-500" data-icon="lucide:database"></span>
+                    </div>
+                    <h3 class="text-xl font-medium text-white tracking-tight mb-3">Data Repository</h3>
+                    <p class="text-zinc-400 leading-relaxed">
+                        Access and contribute to our growing database of real-time data and evidence.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="testimonials" class="py-24 bg-zinc-900 border-t border-zinc-800/50">
+        <div class="max-w-7xl mx-auto px-6">
+            <h2 class="text-4xl md:text-5xl font-medium tracking-tight text-white mb-12">
+                Voices of <em class="text-blue-400 italic">Change</em>
+            </h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                <div class="p-8 rounded-2xl bg-zinc-950 border border-zinc-800/50">
+                    <blockquote class="text-lg text-zinc-300 leading-relaxed mb-6">
+                        "Unified Frontier CJP has given me a platform to truly contribute to national discourse. The data resources are invaluable."
+                    </blockquote>
+                    <div class="flex items-center gap-4">
+                        <div class="w-12 h-12 rounded-full bg-blue-600 flex items-center justify-center text-white font-bold text-lg">AS</div>
+                        <div>
+                            <p class="font-medium text-white">Anjali Sharma</p>
+                            <p class="text-sm text-zinc-400">CJP Member</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="p-8 rounded-2xl bg-zinc-950 border border-zinc-800/50">
+                    <blockquote class="text-lg text-zinc-300 leading-relaxed mb-6">
+                        "Finally, a movement that exposes the truth with facts. Proud to be part of this impactful community."
+                    </blockquote>
+                    <div class="flex items-center gap-4">
+                        <div class="w-12 h-12 rounded-full bg-emerald-600 flex items-center justify-center text-white font-bold text-lg">RK</div>
+                        <div>
+                            <p class="font-medium text-white">Rahul Kumar</p>
+                            <p class="text-sm text-zinc-400">Data Analyst</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="p-8 rounded-2xl bg-zinc-950 border border-zinc-800/50">
+                    <blockquote class="text-lg text-zinc-300 leading-relaxed mb-6">
+                        "The collaborative workspace is a game-changer. It makes real change feel tangible and achievable."
+                    </blockquote>
+                    <div class="flex items-center gap-4">
+                        <div class="w-12 h-12 rounded-full bg-violet-600 flex items-center justify-center text-white font-bold text-lg">PS</div>
+                        <div>
+                            <p class="font-medium text-white">Priya Singh</p>
+                            <p class="text-sm text-zinc-400">Researcher</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="cta" class="relative py-24 bg-zinc-950 border-t border-zinc-800/50">
+        <div class="relative z-10 text-center max-w-3xl mx-auto px-6">
+            <h2 class="text-4xl md:text-5xl font-medium tracking-tight text-white mb-6">
+                Ready to Make a <em class="text-blue-400 italic">Difference</em>?
+            </h2>
+            <p class="text-lg text-zinc-400 leading-relaxed mb-10">
+                Join Unified Frontier CJP and become a part of a movement dedicated to truth, data, and positive change for India.
+            </p>
+            <a href="#contact" class="inline-flex items-center justify-center h-14 px-10 rounded-xl bg-blue-600 text-white font-semibold text-lg hover:bg-blue-700 hover:scale-[1.02] active:scale-[0.98] transition-all shadow-lg shadow-blue-600/30">
+                Join the Frontier <span class="iconify ml-2 w-6 h-6" data-icon="lucide:arrow-right"></span>
+            </a>
+        </div>
+    </section>
+
+    <footer class="bg-zinc-900 py-16 border-t border-zinc-800/50">
+        <div class="max-w-7xl mx-auto px-6">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-12">
+                <div class="md:col-span-2">
+                    <h3 class="text-2xl font-semibold text-white mb-4">Unified Frontier CJP</h3>
+                    <p class="text-zinc-400 leading-relaxed">
+                        Dedicated to exposing truths, empowering change, and building a stronger, more transparent India through data and research.
+                    </p>
+                </div>
+                <div>
+                    <h4 class="text-lg font-medium text-white mb-4">Quick Links</h4>
+                    <ul class="space-y-2">
+                        <li><a href="#about" class="text-zinc-400 hover:text-white transition-colors">About Us</a></li>
+                        <li><a href="#insights" class="text-zinc-400 hover:text-white transition-colors">Insights</a></li>
+                        <li><a href="#research" class="text-zinc-400 hover:text-white transition-colors">Research</a></li>
+                        <li><a href="#workspace" class="text-zinc-400 hover:text-white transition-colors">Workspace</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 class="text-lg font-medium text-white mb-4">Connect</h4>
+                    <div class="flex gap-4 mb-6">
+                        <a href="#" class="text-zinc-400 hover:text-white transition-colors"><span class="iconify w-6 h-6" data-icon="lucide:twitter"></span></a>
+                        <a href="#" class="text-zinc-400 hover:text-white transition-colors"><span class="iconify w-6 h-6" data-icon="lucide:linkedin"></span></a>
+                        <a href="#" class="text-zinc-400 hover:text-white transition-colors"><span class="iconify w-6 h-6" data-icon="lucide:mail"></span></a>
+                    </div>
+                    <p class="text-zinc-400 text-sm">&copy; 2026 Unified Frontier CJP. All rights reserved.</p>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Iconify -->
+    <script src="https://code.iconify.design/3/3.1.0/iconify.min.js"></script>
+    <!-- Tailwind Config -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'system-ui', 'sans-serif'],
+                    },
+                    animation: {
+                        'slow-pulse': 'slow-pulse 3s ease-in-out infinite',
+                    },
+                    keyframes: {
+                        'slow-pulse': {
+                            '0%, 100%': { opacity: '1' },
+                            '50%': { opacity: '0.5' },
+                        },
+                    },
+                },
+            },
+        };
+    </script>
+
+    <!-- Mobile Menu Button and Navigation -->
+    <script>
+        // Mobile Menu Toggle
+        function toggleMobileMenu() {
+            const backdrop = document.getElementById('mobile-menu-backdrop');
+            const menu = document.getElementById('mobile-menu');
+            backdrop?.classList.toggle('show');
+            menu?.classList.toggle('show');
+        }
+
+        // Close mobile menu when a link is clicked
+        document.querySelectorAll('#mobile-menu nav a').forEach(link => {
+            link.addEventListener('click', () => {
+                const backdrop = document.getElementById('mobile-menu-backdrop');
+                const menu = document.getElementById('mobile-menu');
+                backdrop?.classList.remove('show');
+                menu?.classList.remove('show');
+            });
+        });
+
+        // Header scroll effect
+        window.addEventListener('scroll', () => {
+            const header = document.querySelector('header');
+            if (window.scrollY > 50) {
+                header?.setAttribute('data-scrolled', 'true');
+            } else {
+                header?.setAttribute('data-scrolled', 'false');
+            }
+        });
+    </script>
+</body>
+</html>
